@@ -1,61 +1,104 @@
-import { useState, useMemo } from "react";
-import { useNavigate, useLocation } from "react-router";
-import Box from "@mui/material/Box";
-import Drawer from "@mui/material/Drawer";
-import IconButton from "@mui/material/IconButton";
-import MenuIcon from "@mui/icons-material/Menu";
-import List from "@mui/material/List";
-import ListItem from "@mui/material/ListItem";
-import ListItemButton from "@mui/material/ListItemButton";
-import ListItemText from "@mui/material/ListItemText";
-import Divider from "@mui/material/Divider";
+import { useState } from "react";
+import {
+  Drawer,
+  List,
+  ListItem,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Typography,
+  Collapse,
+  Box,
+} from "@mui/material";
+import {
+  ScatterPlot as ScatterPlotIcon,
+  AccountTree as TreeIcon,
+} from "@mui/icons-material";
+import { useNavigate } from "react-router-dom";
 
-function SideBar() {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [open, setOpen] = useState(false);
+const drawerWidth = 240;
+const collapsedWidth = 64;
 
-  const toggleDrawer = (newOpen) => () => setOpen(newOpen);
+const SideBar = ({ open }) => {
+  const navigate=useNavigate();
 
-  const listItems = useMemo(() => [
-    { id: 1, text: "Scatter Plot", path: "/" },
-    { id: 2, text: "Tree Visualizer", path: "/tree" },
-  ], []);
+  const handleNavigation = () => {
+    navigate('/');
+  };
 
-  const DrawerList = (
-    <Box sx={{ width: 250 }} role="presentation">
-      <Box sx={{ p: 2, fontWeight: 'bold', fontSize: '1.2rem' }}>
-        Dashboard
+  const handleTreeNavigation=()=>{
+    navigate('/tree');
+  }
+
+  const mainItems = [
+    { text: "Scatter Plot", icon: <ScatterPlotIcon /> ,onClick:()=>handleNavigation()},
+    { text: "Tree Visualizer", icon: <TreeIcon />  ,onClick:()=>handleTreeNavigation()},
+  ];
+
+
+  const drawerContent = (
+    <Box sx={{ overflow: "hidden" }}>
+      <Box sx={{ height: 64 }} />
+      <Box sx={{ px: open ? 2 : 1, py: 1 }}>
+        <List sx={{ py: 0 }}>
+          {mainItems.map((item) => (
+            <ListItem key={item.text} disablePadding>
+              <ListItemButton
+              onClick={item.onClick}
+                sx={{
+                  minHeight: 48,
+                  justifyContent: open ? "initial" : "center",
+                  px: 2.5,
+                  borderRadius: 1,
+                  mb: 0.5,
+                  backgroundColor: item.active ? "#e3f2fd" : "transparent",
+                  color: item.active ? "#1976d2" : "inherit",
+                  "&:hover": {
+                    backgroundColor: item.active ? "#bbdefb" : "#f5f5f5",
+                  },    
+                }}
+              >
+                <ListItemIcon
+                  sx={{
+                    minWidth: 0,
+                    mr: open ? 3 : "auto",
+                    justifyContent: "center",
+                    color: "inherit",
+                  }}
+                >
+                  {item.icon}
+                </ListItemIcon>
+                <ListItemText
+                  primary={item.text}
+                  sx={{ opacity: open ? 1 : 0 }}
+                />
+              </ListItemButton>
+            </ListItem>
+          ))}
+        </List>
       </Box>
-      <Divider />
-      <List>
-        {listItems.map((item) => (
-          <ListItem key={item.id} disablePadding>
-            <ListItemButton
-              selected={location.pathname === item.path}
-              onClick={() => {
-                navigate(item.path);
-                setOpen(false);
-              }}
-            >
-              <ListItemText primary={item.text} />
-            </ListItemButton>
-          </ListItem>
-        ))}
-      </List>
     </Box>
   );
 
   return (
-    <div>
-      <IconButton onClick={toggleDrawer(true)} sx={{ m: 1 }}>
-        <MenuIcon />
-      </IconButton>
-      <Drawer open={open} onClose={toggleDrawer(false)}>
-        {DrawerList}
-      </Drawer>
-    </div>
+    <Drawer
+      variant="permanent"
+      sx={{
+        width: open ? drawerWidth : collapsedWidth,
+        flexShrink: 0,
+        "& .MuiDrawer-paper": {
+          width: open ? drawerWidth : collapsedWidth,
+          boxSizing: "border-box",
+          transition: "width 0.3s ease",
+          backgroundColor: "#fafafa",
+          borderRight: "1px solid #e0e0e0",
+          overflowX: "hidden",
+        },
+      }}
+    >
+      {drawerContent}
+    </Drawer>
   );
-}
+};
 
 export default SideBar;

@@ -1,19 +1,57 @@
+import { useState } from "react"
+import { Box, CssBaseline, ThemeProvider, createTheme } from "@mui/material"
+import Header from '../Header/Header';
+import SideBar from "../SideBar/SideBar";
 import { Outlet } from "react-router-dom";
-import SideBar from "../SideBar/SideBar.jsx";
-import { Box } from "@mui/material";
-import Header from '../Header/Header.jsx'
 
+const Layout = ({ children }) => {
+  const [sidebarOpen, setSidebarOpen] = useState(true)
 
-const Layout = () => {
+  const theme = createTheme({
+    palette: {
+      mode: "light",
+      background: {
+        default: "#f5f5f5",
+        paper: "#ffffff",
+      },
+    },
+    components: {
+      MuiAppBar: {
+        styleOverrides: {
+          root: {
+            backgroundColor: "#ffffff",
+            color: "#000000",
+          },
+        },
+      },
+    },
+  })
+
+  const handleMenuClick = () => {
+    setSidebarOpen(!sidebarOpen)
+  }
+
   return (
-    <Box sx={{ display: "flex" }}>
-      <Header />
-      
-      <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
-        <Outlet />
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Box sx={{ display: "flex" }}>
+        <Header onMenuClick={handleMenuClick} />
+        <SideBar open={sidebarOpen} />
+        <Box
+          component="main"
+          sx={{
+            flexGrow: 1,
+            p: 3,
+            mt: 8, 
+            ml: sidebarOpen ? 0 : 0, 
+            transition: "margin 0.3s ease",
+          }}
+        >
+          <Outlet/>
+        </Box>
       </Box>
-    </Box>
-  );
-};
+    </ThemeProvider>
+  )
+}
 
 export default Layout;

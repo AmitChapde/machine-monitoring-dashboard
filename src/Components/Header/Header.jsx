@@ -1,23 +1,34 @@
-import React from "react";
-import AppBar from "@mui/material/AppBar";
-import Toolbar from "@mui/material/Toolbar";
-import Typography from "@mui/material/Typography";
-import Box from "@mui/material/Box";
-import SideBar from "../SideBar/SideBar";
+"use client"
+import { AppBar, Toolbar, Typography, IconButton, Box } from "@mui/material"
+import { Menu as MenuIcon } from "@mui/icons-material"
+import DashboardIcon from '@mui/icons-material/Dashboard';
 
-function Header({title}) {
+const Header = ({ onMenuClick}) => {
   return (
-    <AppBar position="fixed" sx={{color:'#272e3f'}}>
+    <AppBar
+      position="fixed"
+      sx={{
+        zIndex: (theme) => theme.zIndex.drawer + 1,
+        backgroundColor: "#272e3f",
+        color: "#ffff",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.12)",
+      }}
+    >
       <Toolbar>
-        <SideBar />
-        <Typography variant="h6" noWrap component="div" >
-          Machine Monitoring Dashboard
-        </Typography>
-        <Box sx={{ flexGrow: 1 }} />
-        
+        <IconButton color="inherit" aria-label="open drawer" onClick={onMenuClick} edge="start" sx={{ mr: 2 }}>
+          <MenuIcon />
+        </IconButton>
+
+        <Box sx={{ display: "flex", alignItems: "center", flexGrow: 1,gap:"0.2rem"}}>
+          
+          <DashboardIcon/>
+          <Typography variant="h6" noWrap component="div">
+            DashBoard
+          </Typography>
+        </Box>
       </Toolbar>
     </AppBar>
-  );
+  )
 }
 
 export default Header;
