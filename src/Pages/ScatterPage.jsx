@@ -1,11 +1,12 @@
 import React from 'react';
+import SideBar from '../Components/SideBar/SideBar';
 
 function ScatterPage() {
   return (
-    <div>
-      scatterrrrr
-    </div>
-  );
+    <>
+      
+    </>
+  ); 
 }
 
 export default ScatterPage;
