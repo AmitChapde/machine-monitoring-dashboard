@@ -5,7 +5,7 @@ import SideBar from "../SideBar/SideBar";
 import { Outlet } from "react-router-dom";
 
 const Layout = ({ children }) => {
-  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   const theme = createTheme({
     palette: {
@@ -13,6 +13,7 @@ const Layout = ({ children }) => {
       background: {
         default: "#f5f5f5",
         paper: "#ffffff",
+        transition:"margin 0.5s ease-in-out"
       },
     },
     components: {

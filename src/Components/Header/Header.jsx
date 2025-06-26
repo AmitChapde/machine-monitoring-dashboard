@@ -20,7 +20,6 @@ const Header = ({ onMenuClick}) => {
         </IconButton>
 
         <Box sx={{ display: "flex", alignItems: "center", flexGrow: 1,gap:"0.2rem"}}>
-          
           <DashboardIcon/>
           <Typography variant="h6" noWrap component="div">
             DashBoard

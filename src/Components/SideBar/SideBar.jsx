@@ -31,7 +31,7 @@ const SideBar = ({ open }) => {
   }
 
   const mainItems = [
-    { text: "Scatter Plot", icon: <ScatterPlotIcon /> ,onClick:()=>handleNavigation()},
+    { text: "Scatter Data", icon: <ScatterPlotIcon /> ,onClick:()=>handleNavigation()},
     { text: "Tree Visualizer", icon: <TreeIcon />  ,onClick:()=>handleTreeNavigation()},
   ];
 

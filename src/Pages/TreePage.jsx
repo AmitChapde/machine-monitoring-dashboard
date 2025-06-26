@@ -1,4 +1,5 @@
 import { Typography, Paper, Box } from "@mui/material";
+import TreeVisualization from "../Components/TreeVisualizationComponent/TreeVisualization";
 
 const TreePage = () => {
   return (
@@ -14,9 +15,9 @@ const TreePage = () => {
           borderRadius: 2,
         }}
       >
-        <Typography variant="body2">
-          This page will show your hierarchical visualizations.
-        </Typography>
+        <Box sx={{ height: "70vh", mt: 2 }}>
+          <TreeVisualization />
+        </Box>
       </Paper>
     </Box>
   );

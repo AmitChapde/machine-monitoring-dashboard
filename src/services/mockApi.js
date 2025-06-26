@@ -9,7 +9,7 @@ export const getChangeLogData = async ({
 }) => {
   try {
     const response = await axios.get(
-      `/Scatter Data JSON/${machine_id}/changelog.json`
+      `/ScatterDataJSON/${machine_id}/changelog.json`
     );
     let result = response.data?.Result ?? [];
 
@@ -46,10 +46,14 @@ export const getChangeLogData = async ({
 export const getPredictionData = async ({ machine_id, from_time, to_time }) => {
   try {
     const response = await axios.get(
-      `/Scatter Data JSON/${machine_id}/prediction_data.json`
+      `/ScatterDataJSON/${machine_id}/prediction_data.json`
     );
 
-    const { cycles, ...rest } = response.data;
+    const { Result } = response.data;
+    if (!Result) throw new Error("No Result property in prediction_data.json");
+
+    const { cycles, ...rest } = Result;
+    if (!cycles) throw new Error("No cycles property in Result");
 
     const from = from_time ? parseISO(from_time) : null;
     const to = to_time ? parseISO(to_time) : null;
@@ -65,6 +69,7 @@ export const getPredictionData = async ({ machine_id, from_time, to_time }) => {
 
     const filteredCycleObject = Object.fromEntries(filteredCycles);
 
+  
     return {
       ...rest,
       cycles: filteredCycleObject,
@@ -83,9 +88,10 @@ export const getTimeSeriesData = async ({
 }) => {
   try {
     const response = await axios.get(
-      `/Scatter Data JSON/${machine_id}/timeseries_cycledata_${anomalyType}.json`
+      `/ScatterDataJSON/${machine_id}/timeseries_cycledata_${anomalyType}.json`
     );
-
+    console.log("Fetched prediction data:", response.data);
+    
     const cycleEntry = response.data?.data?.[cyclelog_id];
     if (!cycleEntry) {
       throw new Error(
@@ -99,7 +105,7 @@ export const getTimeSeriesData = async ({
         `Signal ${signal} not found for cyclelog_id ${cyclelog_id}.`
       );
     }
-
+    console.log("Time series data:", timeSeries);
     return timeSeries;
   } catch (error) {
     console.error("Error fetching time series data:", error);
