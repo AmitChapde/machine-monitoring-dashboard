@@ -44,7 +44,7 @@ const TreeVisualization = () => {
       .catch((error) => console.error("Error loading data:", error));
   }, []);
 
-  // Handles opening the edit interface when SpeedDial edit button is clicked
+
   const handleOpenEdit = (event, node) => {
     event.stopPropagation();
     setSelectedNode(node);
@@ -60,7 +60,7 @@ const TreeVisualization = () => {
     setEditing(true);
   };
 
-  // Applies changes to node data and updates the graph
+  // Function to update data and refresh the graph
   const updateDataAndRefresh = () => {
     const updatedMap = rawData.prod_machine_map.map((m) =>
       m.id === Number(selectedNode.id)

@@ -12,10 +12,19 @@ import {
   Chip,
 } from "@mui/material";
 import filterDataByTool from "../utils/filterDataByTool";
-import { getChangeLogData, getPredictionData } from "../services/mockApi";
-import ScatterChartComponent from "../Components/ScatterPlot/ScatterChartComponent";
+import {
+  getChangeLogData,
+  getPredictionData,
+  getCycleData,
+} from "../services/mockApi";
+import { mapCycleData } from "../utils/mapCycleData";
+import ScatterChart from "../Components/ScatterPlot/ScatterChart";
+import TimeSeriesGraph from "../Components/TimeSeriesGraph/TimeSeriesGraph";
+import ScatterLegend from "../Components/ScatterLegend/ScatterLegend";
+import { useSnackbar } from "notistack";
 
 const ScatterPage = () => {
+  const { enqueueSnackbar } = useSnackbar();
   const [machineId, setMachineId] = useState("SSP0173");
   const [toolOptions, setToolOptions] = useState([]);
   const [selectedTool, setSelectedTool] = useState("");
@@ -25,63 +34,120 @@ const ScatterPage = () => {
   const [rawPrediction, setRawPrediction] = useState(null);
   const [rawChangeLog, setRawChangeLog] = useState(null);
   const [scatterData, setScatterData] = useState({});
-  const [clickedPoint, setClickedPoint] = useState(null);
   const [showComparison, setShowComparison] = useState(false);
+  const [selectedCycle, setSelectedCycle] = useState(null);
+  const [actualSignal, setActualSignal] = useState(null);
+  const [idealSignal, setIdealSignal] = useState(null);
+  const [selectedAnomaly, setSelectedAnomaly] = useState(null);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const changeLog = await getChangeLogData({
-          machine_id: machineId,
-          from_time: fromTime,
-          to_time: toTime,
-        });
+ 
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+    
+      const changeLog = await getChangeLogData({
+        machine_id: machineId,
+        from_time: fromTime,
+        to_time: toTime,
+      });
+    
 
-        const prediction = await getPredictionData({
-          machine_id: machineId,
-          from_time: fromTime,
-          to_time: toTime,
-        });
+      const prediction = await getPredictionData({
+        machine_id: machineId,
+        from_time: fromTime,
+        to_time: toTime,
+      });
+      setRawPrediction(prediction);
+      setRawChangeLog(changeLog);
 
-        setRawPrediction(prediction);
-        setRawChangeLog(changeLog);
+      const toolMap = changeLog?.Result?.length
+        ? changeLog.Result[0]?.config_parameters?.tool_sequence_map
+        : null;
 
-        const toolMap = changeLog?.Result?.length
-          ? changeLog.Result[0]?.config_parameters?.tool_sequence_map
-          : null;
+    
 
-        if (toolMap) {
-          const toolOpts = Object.entries(toolMap).map(([key, value]) => ({
-            id: key,
-            label: `${value}`,
-          }));
-          setToolOptions(toolOpts);
-
-          if (!toolOpts.find((t) => t.id === selectedTool)) {
-            setSelectedTool(toolOpts[0]?.id ?? "");
-          }
-        } else {
-          setToolOptions([]);
-          setSelectedTool("");
-        }
-
-        const unprocessedArray = Object.entries(
-          prediction.unprocessed_sequences
-        ).map(([toolId, count]) => ({
-          toolId: Math.floor(parseInt(toolId) / 100),
-          count,
+      if (toolMap) {
+        const toolOpts = Object.entries(toolMap).map(([key, value]) => ({
+          id: key,
+          label: `${value}`,
         }));
+      
+        setToolOptions(toolOpts);
 
-        setUnprocessedSequences(unprocessedArray);
-      } catch (err) {
-        console.error("Error during data fetch:", err);
+        if (!toolOpts.find((t) => t.id === selectedTool)) {
+          setSelectedTool(toolOpts[0]?.id ?? "");
+        }
+      } else {
+        
+        setToolOptions([]);
+        setSelectedTool("");
       }
-    };
 
-    fetchData();
-  }, [machineId, fromTime, toTime]);
+      const unprocessedArray = Object.entries(
+        prediction.unprocessed_sequences
+      ).map(([toolId, count]) => ({
+        toolId: Math.floor(parseInt(toolId) / 100),
+        count,
+      }));
+
+      setUnprocessedSequences(unprocessedArray);
+    } catch (e) {
+      console.error("ChangeLog fetch error", e);
+    }
+  };
+
+  fetchData();
+}, [machineId, fromTime, toTime]);
+
+  // fetch ideal signal after tools are loaded and selected
+  // useEffect(() => {
+  //   if (!selectedTool || !rawChangeLog) return;
+
+  //   const ideal =
+  //     rawChangeLog?.Result?.[0]?.learned_parameters?.[selectedTool]
+  //       ?.average_list ?? [];
+  //   setIdealSignal(ideal);
+  // }, [selectedTool, rawChangeLog]);
+
+  // useEffect(() => {
+  //   const fetchActualSignal = async () => {
+  //     if (!selectedCycle || selectedAnomaly == null) return;
+
+  //     try {
+  //       const anomalyType =
+  //         selectedAnomaly === true
+  //           ? "red"
+  //           : selectedAnomaly === false
+  //           ? "green"
+  //           : "black";
+
+  //       const response = await getCycleData({
+  //         machine_id: machineId,
+  //         cyclelog_id: selectedCycle,
+  //         signal: "spindle_1_load",
+  //         anomalyType,
+  //       });
+  //       console.log("Fetched cycle data:", response);
+  //       const mapped = Object.entries(response).map(([x, y]) => ({
+  //         x: parseFloat(x),
+  //         y,
+  //       }));
+  //       setActualSignal(mapped);
+  //     } catch (err) {
+  //       console.error("Error fetching timeseries cycle data", err);
+  //     }
+  //   };
+
+  //   fetchActualSignal();
+  // }, [selectedCycle, selectedAnomaly]);
 
   const handleSearch = () => {
+    if (!fromTime || !toTime) {
+      enqueueSnackbar("Please select both start and end times.", {
+        variant: "error",
+      });
+      return;
+    }
     if (!rawPrediction || !rawChangeLog || !selectedTool) return;
 
     const filtered = filterDataByTool(
@@ -93,8 +159,6 @@ const ScatterPage = () => {
     setScatterData(filtered);
   };
 
-
-
   return (
     <Box>
       <Typography variant="h4" gutterBottom>
@@ -104,7 +168,6 @@ const ScatterPage = () => {
       {/* Filters */}
       <Paper elevation={1} sx={{ p: 3, mt: 2, borderRadius: 2 }}>
         <Box display="flex" gap={2} flexWrap="wrap" alignItems="center">
-          {/* Machine Selector */}
           <FormControl sx={{ minWidth: 250 }}>
             <InputLabel id="machine-label">Machine</InputLabel>
             <Select
@@ -118,7 +181,6 @@ const ScatterPage = () => {
             </Select>
           </FormControl>
 
-          {/* From Time */}
           <TextField
             label="Start Time"
             type="datetime-local"
@@ -128,7 +190,6 @@ const ScatterPage = () => {
             sx={{ minWidth: 250 }}
           />
 
-          {/* To Time */}
           <TextField
             label="End Time"
             type="datetime-local"
@@ -138,13 +199,12 @@ const ScatterPage = () => {
             sx={{ minWidth: 250 }}
           />
 
-          {/* Tool Selector */}
           <FormControl sx={{ minWidth: 250 }}>
             <InputLabel id="tool-label">Tools</InputLabel>
             <Select
               labelId="tool-label"
               value={selectedTool}
-              label="Tool"
+              label="Tools"
               onChange={(e) => setSelectedTool(e.target.value)}
             >
               {toolOptions.map((tool) => (
@@ -155,7 +215,6 @@ const ScatterPage = () => {
             </Select>
           </FormControl>
 
-          {/* Search */}
           <Button
             variant="contained"
             onClick={handleSearch}
@@ -197,16 +256,33 @@ const ScatterPage = () => {
       )}
 
       {/* Scatter Chart */}
-      <Paper sx={{ p: 3, mt: 2, borderRadius: 2 }}>
+      <Paper
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          p: 3,
+          mt: 2,
+          borderRadius: 2,
+          alignItems: "center",
+        }}
+      >
         {scatterData.scatterData?.length > 0 ? (
-          <ScatterChartComponent
-            data={scatterData}
-            threshold={scatterData?.threshold}
-            validationLimits={scatterData?.validationLimits}
-            selectedTool={selectedTool}
-            showComparison={showComparison}
-            onPointClick={setClickedPoint}
-          />
+          <>
+            <ScatterChart
+              data={scatterData.scatterData}
+              threshold={scatterData?.threshold}
+              validationLimits={scatterData?.validationLimits}
+              selectedTool={selectedTool}
+              showComparison={showComparison}
+              onPointClick={(cycleId, anomaly) => {
+                console.log("clicked cycle id", cycleId, anomaly);
+                setSelectedCycle(cycleId);
+                setSelectedAnomaly(anomaly);
+              }}
+            />
+
+            <ScatterLegend />
+          </>
         ) : (
           <Typography variant="body1" color="textSecondary">
             No data available for the selected filters.
@@ -214,12 +290,14 @@ const ScatterPage = () => {
         )}
       </Paper>
 
-      {/* Graph 2 (Placeholder) */}
+      {/* Graph 2 */}
       <Paper sx={{ p: 3, mt: 2, borderRadius: 2 }}>
-        <Typography>Time Series Graph (Graph 2)</Typography>
-        <Box></Box>
+        {selectedCycle && actualSignal && idealSignal && (
+          <TimeSeriesGraph actualData={actualSignal} idealData={idealSignal} />
+        )}
       </Paper>
     </Box>
   );
 };
+
 export default ScatterPage;

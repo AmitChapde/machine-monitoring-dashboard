@@ -16,6 +16,10 @@ export const getChangeLogData = async ({
     const from = from_time ? parseISO(from_time) : null;
     const to = to_time ? parseISO(to_time) : null;
 
+    const configEntry = result.find(
+      (item) => item.config_parameters?.tool_sequence_map
+    );
+
     if (from || to) {
       result = result.filter((item) => {
         const start = parseISO(item.start_time);
@@ -27,6 +31,10 @@ export const getChangeLogData = async ({
 
         return isValidFrom && isValidTo;
       });
+    }
+
+    if (configEntry && !result.includes(configEntry)) {
+      result = [configEntry, ...result];
     }
 
     if (limit) {
@@ -69,7 +77,6 @@ export const getPredictionData = async ({ machine_id, from_time, to_time }) => {
 
     const filteredCycleObject = Object.fromEntries(filteredCycles);
 
-  
     return {
       ...rest,
       cycles: filteredCycleObject,
@@ -80,7 +87,7 @@ export const getPredictionData = async ({ machine_id, from_time, to_time }) => {
   }
 };
 
-export const getTimeSeriesData = async ({
+export const getCycleData = async ({
   machine_id,
   cyclelog_id,
   signal,
@@ -90,8 +97,7 @@ export const getTimeSeriesData = async ({
     const response = await axios.get(
       `/ScatterDataJSON/${machine_id}/timeseries_cycledata_${anomalyType}.json`
     );
-    console.log("Fetched prediction data:", response.data);
-    
+
     const cycleEntry = response.data?.data?.[cyclelog_id];
     if (!cycleEntry) {
       throw new Error(
