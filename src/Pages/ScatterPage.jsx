@@ -15,7 +15,7 @@ import {
   Grid,
   Stack,
   Switch,
-  FormControlLabel
+  FormControlLabel,
 } from "@mui/material";
 import filterDataByTool from "../utils/filterDataByTool";
 import {
@@ -217,6 +217,10 @@ const ScatterPage = () => {
       });
       return;
     }
+
+    setSelectedCycle(null);
+    setSelectedAnomaly(null);
+    setActualSignal(null);
     if (!rawPrediction || !rawChangeLog || !selectedTool) return;
 
     const filtered = filterDataByTool(
