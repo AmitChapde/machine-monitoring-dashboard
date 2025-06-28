@@ -47,7 +47,7 @@ const TreeVisualization = () => {
       .catch((error) => console.error("Error loading data:", error));
   }, []);
 
-    // Handle opening the edit panel for a node.
+  // Handle opening the edit panel for a node.
   const handleOpenEdit = (event, node) => {
     // Prevent React Flow from handling the click.
     event.stopPropagation();
@@ -64,7 +64,7 @@ const TreeVisualization = () => {
     setEditing(true);
   };
 
-   // Function to save the edited node data and refresh the graph.
+  // Function to save the edited node data and refresh the graph.
   const updateDataAndRefresh = () => {
     const updatedMap = rawData.prod_machine_map.map((m) =>
       m.id === Number(selectedNode.id)
@@ -92,13 +92,12 @@ const TreeVisualization = () => {
       bypass_list: newBypass,
       not_allowed_list: newNotAllowed,
     });
-    
 
     setSelectedNode(null);
     setEditing(false);
   };
 
-  //Memoizing the graph generation function 
+  //Memoizing the graph generation function
   const generateGraph = useCallback(
     (data) => {
       const getDepth = (nodeId, visited = new Set()) => {
@@ -146,7 +145,7 @@ const TreeVisualization = () => {
         };
       });
 
-       // Create React Flow edges (connections) from the raw data.
+      // Create React Flow edges (connections) from the raw data.
       const edges = data.prod_machine_map.flatMap((m) =>
         m.input_stations.map((inputId) => ({
           id: `e${inputId}-${m.id}`,
@@ -176,10 +175,18 @@ const TreeVisualization = () => {
   }, [rawData, generateGraph]);
 
   return (
-    <Box sx={{ width: "100%", height: 600, position: "relative" }} onClick={() => setShowDisconnected(!showDisconnected)}>
+    <Box sx={{ width: "100%", height: 600, position: "relative" }}>
       <ReactFlow
         nodes={nodes.map((node) => ({
           ...node,
+          style: {
+            ...node.style,
+            background: getNodeColor(
+              node.data.machine_id,
+              rawData?.bypass_list || [],
+              rawData?.not_allowed_list || []
+            ),
+          },
           data: {
             ...node.data,
             label: (
@@ -190,17 +197,20 @@ const TreeVisualization = () => {
                   position: "relative",
                 }}
               >
-                <strong>{node.data.station_number}</strong>
-                <br />
-                <span>{node.data.name}</span>
+                <strong> {node.data.station_number} </strong> <br />
+                <span> {node.data.name} </span>{" "}
                 <Fab
                   color="primary"
                   size="small"
-                  style={{ position: "absolute", bottom: -30, right: -30 }}
+                  style={{
+                    position: "absolute",
+                    bottom: -30,
+                    right: -30,
+                  }}
                   onClick={(e) => handleOpenEdit(e, node)}
                 >
                   <EditIcon />
-                </Fab>
+                </Fab>{" "}
               </div>
             ),
           },
@@ -214,7 +224,7 @@ const TreeVisualization = () => {
         <Background gap={16} />
       </ReactFlow>
 
-        {/* Disconnected Nodes */}
+      {/* Disconnected Nodes */}
       <Box sx={{ position: "absolute", top: 10, right: 10 }}>
         <Tooltip title="View Disconnected nodes">
           <MenuSharpIcon

@@ -6,6 +6,6 @@ export const getNodeColor = (machine_id, bypass_list, not_allowed_list) => {
   } else if (bypass_list.includes(machine_id)) {
     return "#2196f3";
   } else {
-    return "#ffffffF";
+    return "#FFFFFF";
   }
 };
