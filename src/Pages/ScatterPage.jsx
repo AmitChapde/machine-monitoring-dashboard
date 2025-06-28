@@ -27,7 +27,6 @@ import TimeSeriesGraph from "../Components/TimeSeriesGraph/TimeSeriesGraph";
 import ScatterLegend from "../Components/ScatterLegend/ScatterLegend";
 import Loader from "../Components/Common/Loader";
 import TimeSeriesLegend from "../Components/TimeSeriesLegend/TimeSeriesLegend";
-import CycleDataStatus from "../Components/CycleDataStatus/CycleDataStatus";
 import { useSnackbar } from "notistack";
 import { lazy } from "react";
 
