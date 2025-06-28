@@ -14,6 +14,8 @@ import {
   useMediaQuery,
   Grid,
   Stack,
+  Switch,
+  FormControlLabel
 } from "@mui/material";
 import filterDataByTool from "../utils/filterDataByTool";
 import {
@@ -25,6 +27,7 @@ import TimeSeriesGraph from "../Components/TimeSeriesGraph/TimeSeriesGraph";
 import ScatterLegend from "../Components/ScatterLegend/ScatterLegend";
 import Loader from "../Components/Common/Loader";
 import TimeSeriesLegend from "../Components/TimeSeriesLegend/TimeSeriesLegend";
+import CycleDataStatus from "../Components/CycleDataStatus/CycleDataStatus";
 import { useSnackbar } from "notistack";
 import { lazy } from "react";
 
@@ -37,8 +40,6 @@ const ScatterChart = lazy(() =>
 const ScatterPage = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
-  const isTablet = useMediaQuery(theme.breakpoints.between("md", "lg"));
-  const isDesktop = useMediaQuery(theme.breakpoints.up("lg"));
 
   const { enqueueSnackbar } = useSnackbar();
   const [machineId, setMachineId] = useState("SSP0173");
@@ -54,7 +55,11 @@ const ScatterPage = () => {
   const [actualSignal, setActualSignal] = useState(null);
   const [idealSignal, setIdealSignal] = useState(null);
   const [selectedAnomaly, setSelectedAnomaly] = useState(null);
-  
+  const [fromTimeDate, setFromTimeDate] = useState("");
+  const [fromTimeTime, setFromTimeTime] = useState("");
+  const [toTimeDate, setToTimeDate] = useState("");
+  const [toTimeTime, setToTimeTime] = useState("");
+  const [showComparison, setShowComparison] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -72,7 +77,7 @@ const ScatterPage = () => {
 
         // Update state with raw fetched data.
         setRawPrediction(prediction);
-        
+
         setRawChangeLog(changeLog);
         console.log("ChangeLog data fetched:", changeLog);
 
@@ -113,7 +118,7 @@ const ScatterPage = () => {
     fetchData();
   }, [machineId, fromTime, toTime]);
 
-  //  the ideal signal for the time series graph
+  // the ideal signal for the time series graph
   useEffect(() => {
     if (!selectedTool || !rawChangeLog) return;
 
@@ -126,8 +131,8 @@ const ScatterPage = () => {
   //the actual signal for the time series graph
   useEffect(() => {
     const fetchActualSignal = async () => {
-   
       if (!selectedCycle || selectedAnomaly == null) {
+        setUnprocessedCycleStatus(null);
         return;
       }
 
@@ -139,31 +144,25 @@ const ScatterPage = () => {
             ? "green"
             : "black";
 
-       
         const response = await getCycleData({
           machine_id: machineId,
           cyclelog_id: selectedCycle,
           signal: "spindle_1_load",
           anomalyType,
         });
-       
 
-        const rawCycleData = response ?? {}; 
-        
+        const rawCycleData = response ?? {};
 
-        console.log("Extracted rawCycleData:", rawCycleData);
         const mapped = Object.entries(rawCycleData).map(([x, y]) => ({
           x: Number.parseFloat(x),
           y,
         }));
 
         if (!rawCycleData || Object.keys(rawCycleData).length === 0) {
-          
           return;
         }
 
         setActualSignal(mapped);
-        
       } catch (err) {
         console.error("Error fetching timeseries cycle data", err);
       }
@@ -171,6 +170,45 @@ const ScatterPage = () => {
 
     fetchActualSignal();
   }, [selectedCycle, selectedAnomaly]);
+
+  //handler functions for date and time inputs
+  const handleFromDateChange = (e) => {
+    const newDate = e.target.value;
+    setFromTimeDate(newDate);
+
+    const combinedDateTime = newDate
+      ? `${newDate}T${fromTimeTime || "00:00"}`
+      : "";
+    setFromTime(combinedDateTime);
+  };
+
+  const handleFromTimeChange = (e) => {
+    const newTime = e.target.value;
+    setFromTimeTime(newTime);
+
+    if (fromTimeDate) {
+      const combinedDateTime = `${fromTimeDate}T${newTime}`;
+      setFromTime(combinedDateTime);
+    }
+  };
+
+  const handleToDateChange = (e) => {
+    const newDate = e.target.value;
+    setToTimeDate(newDate);
+    const combinedDateTime = newDate
+      ? `${newDate}T${toTimeTime || "00:00"}`
+      : "";
+    setToTime(combinedDateTime);
+  };
+
+  const handleToTimeChange = (e) => {
+    const newTime = e.target.value;
+    setToTimeTime(newTime);
+    if (toTimeDate) {
+      const combinedDateTime = `${toTimeDate}T${newTime}`;
+      setToTime(combinedDateTime);
+    }
+  };
 
   //Search button handler
   const handleSearch = () => {
@@ -199,17 +237,6 @@ const ScatterPage = () => {
         overflow: "hidden",
       }}
     >
-      <Typography
-        variant={isMobile ? "h5" : "h4"}
-        gutterBottom
-        sx={{
-          textAlign: { xs: "center", md: "left" },
-          mb: { xs: 2, md: 3 },
-        }}
-      >
-        Scatter Data
-      </Typography>
-
       {/* Filters */}
       <Paper
         elevation={1}
@@ -238,27 +265,57 @@ const ScatterPage = () => {
           </Grid>
 
           <Grid item xs={12} sm={6} md={3}>
-            <TextField
-              fullWidth
-              label="Start Time"
-              type="datetime-local"
-              InputLabelProps={{ shrink: true }}
-              value={fromTime}
-              onChange={(e) => setFromTime(e.target.value)}
-              size={isMobile ? "small" : "medium"}
-            />
+            <Grid container spacing={1}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Start Date"
+                  type="date"
+                  InputLabelProps={{ shrink: true }}
+                  value={fromTimeDate}
+                  onChange={handleFromDateChange}
+                  size={isMobile ? "small" : "medium"}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Start Time"
+                  type="time"
+                  InputLabelProps={{ shrink: true }}
+                  value={fromTimeTime}
+                  onChange={handleFromTimeChange}
+                  size={isMobile ? "small" : "medium"}
+                />
+              </Grid>
+            </Grid>
           </Grid>
 
           <Grid item xs={12} sm={6} md={3}>
-            <TextField
-              fullWidth
-              label="End Time"
-              type="datetime-local"
-              InputLabelProps={{ shrink: true }}
-              value={toTime}
-              onChange={(e) => setToTime(e.target.value)}
-              size={isMobile ? "small" : "medium"}
-            />
+            <Grid container spacing={1}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="End Date"
+                  type="date"
+                  InputLabelProps={{ shrink: true }}
+                  value={toTimeDate}
+                  onChange={handleToDateChange}
+                  size={isMobile ? "small" : "medium"}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="End Time"
+                  type="time"
+                  InputLabelProps={{ shrink: true }}
+                  value={toTimeTime}
+                  onChange={handleToTimeChange}
+                  size={isMobile ? "small" : "medium"}
+                />
+              </Grid>
+            </Grid>
           </Grid>
 
           <Grid item xs={12} sm={6} md={2}>
@@ -296,6 +353,21 @@ const ScatterPage = () => {
             >
               Search
             </Button>
+          </Grid>
+          <Grid item xs={12} md={1}>
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={showComparison}
+                  onChange={(e) => setShowComparison(e.target.checked)}
+                  name="showComparison"
+                  color="primary"
+                  size={isMobile ? "small" : "medium"}
+                />
+              }
+              label="Show Comparison"
+              sx={{ ml: 0 }}
+            />
           </Grid>
         </Grid>
       </Paper>
@@ -435,9 +507,23 @@ const ScatterPage = () => {
               <TimeSeriesGraph
                 actualData={actualSignal}
                 idealData={idealSignal}
+                showIdealSignal={showComparison}
               />
             </Box>
-            <TimeSeriesLegend/>
+
+            <Box
+              sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                mt: 2,
+              }}
+            >
+              <Typography variant="body1" color="textSecondary">
+                Spindle 1 Load
+              </Typography>
+              <TimeSeriesLegend />
+            </Box>
           </>
         ) : (
           <Typography

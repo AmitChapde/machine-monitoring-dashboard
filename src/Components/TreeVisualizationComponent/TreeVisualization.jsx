@@ -176,7 +176,7 @@ const TreeVisualization = () => {
   }, [rawData, generateGraph]);
 
   return (
-    <Box sx={{ width: "100%", height: 600, position: "relative" }}>
+    <Box sx={{ width: "100%", height: 600, position: "relative" }} onClick={() => setShowDisconnected(!showDisconnected)}>
       <ReactFlow
         nodes={nodes.map((node) => ({
           ...node,
