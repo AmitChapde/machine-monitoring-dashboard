@@ -11,14 +11,11 @@ const TimeSeriesGraph = ({ actualData, idealData }) => {
       !idealData ||
       idealData.length === 0
     ) {
-      console.log(
-        "TimeSeriesGraph: Waiting for both actualData and idealData to be available."
-      );
-      return; // Abort the render until both data sets are ready
+    
+      return; 
     }
 
-    console.log("Actual Data Received:", actualData);
-    console.log("Ideal Data Received:", idealData);
+
 
     // transform actual data (object of time:value)
 
@@ -44,7 +41,7 @@ const TimeSeriesGraph = ({ actualData, idealData }) => {
       // Filter out all the null entries.
       .filter((d) => d !== null);
 
-    console.log("Ideal Data after mapping (inspect for NaN):", idealXY);
+
 
     const combinedData = [...actualDataArray, ...idealXY];
 

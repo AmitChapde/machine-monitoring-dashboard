@@ -24,6 +24,7 @@ import {
 import TimeSeriesGraph from "../Components/TimeSeriesGraph/TimeSeriesGraph";
 import ScatterLegend from "../Components/ScatterLegend/ScatterLegend";
 import Loader from "../Components/Common/Loader";
+import TimeSeriesLegend from "../Components/TimeSeriesLegend/TimeSeriesLegend";
 import { useSnackbar } from "notistack";
 import { lazy } from "react";
 
@@ -53,7 +54,8 @@ const ScatterPage = () => {
   const [actualSignal, setActualSignal] = useState(null);
   const [idealSignal, setIdealSignal] = useState(null);
   const [selectedAnomaly, setSelectedAnomaly] = useState(null);
-  const [triggerFetch, setTriggerFetch] = useState(0);
+  
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -124,11 +126,8 @@ const ScatterPage = () => {
   //the actual signal for the time series graph
   useEffect(() => {
     const fetchActualSignal = async () => {
-      console.log("Entering fetchActualSignal function.");
+   
       if (!selectedCycle || selectedAnomaly == null) {
-        console.log(
-          "fetchActualSignal: Aborting due to missing selectedCycle or selectedAnomaly."
-        );
         return;
       }
 
@@ -140,16 +139,14 @@ const ScatterPage = () => {
             ? "green"
             : "black";
 
-        console.log(
-          `fetchActualSignal: Calling getCycleData with machine_id: ${machineId}, cyclelog_id: ${selectedCycle}, anomalyType: ${anomalyType}`
-        );
+       
         const response = await getCycleData({
           machine_id: machineId,
           cyclelog_id: selectedCycle,
           signal: "spindle_1_load",
           anomalyType,
         });
-        console.log("Raw API response for actual signal :", response);
+       
 
         const rawCycleData = response ?? {}; 
         
@@ -166,15 +163,14 @@ const ScatterPage = () => {
         }
 
         setActualSignal(mapped);
-        console.log("Mapped data before setting state:", mapped);
-        console.log("Actual signal data set in state.");
+        
       } catch (err) {
         console.error("Error fetching timeseries cycle data", err);
       }
     };
 
     fetchActualSignal();
-  }, [selectedCycle, selectedAnomaly, triggerFetch]);
+  }, [selectedCycle, selectedAnomaly]);
 
   //Search button handler
   const handleSearch = () => {
@@ -392,7 +388,6 @@ const ScatterPage = () => {
                   console.log("clicked cycle id", cycleId, anomaly);
                   setSelectedCycle(cycleId);
                   setSelectedAnomaly(anomaly);
-                  setTriggerFetch((prev) => prev + 1);
                 }}
               />
 
@@ -428,6 +423,10 @@ const ScatterPage = () => {
           <>
             <Box
               sx={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: { xs: 1, md: 2 },
                 width: "100%",
                 height: { xs: 250, sm: 300, md: 400 },
                 overflow: "hidden",
@@ -438,6 +437,7 @@ const ScatterPage = () => {
                 idealData={idealSignal}
               />
             </Box>
+            <TimeSeriesLegend/>
           </>
         ) : (
           <Typography
