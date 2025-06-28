@@ -19,17 +19,17 @@ export default function ScatterLegend() {
     >
       <Box display="flex" alignItems="center" gap={0.5}>
         <CircleIcon sx={{ color: "green", fontSize: 14 }} />
-        <Typography variant="caption">Anomaly: False</Typography>
+        <Typography variant="caption">Cycle Anomaly: False</Typography>
       </Box>
 
       <Box display="flex" alignItems="center" gap={0.5}>
         <CircleIcon sx={{ color: "red", fontSize: 14 }} />
-        <Typography variant="caption">Anomaly: True</Typography>
+        <Typography variant="caption">Cycle Anomaly: True</Typography>
       </Box>
 
       <Box display="flex" alignItems="center" gap={0.5}>
         <CircleIcon sx={{ color: "black", fontSize: 14 }} />
-        <Typography variant="caption">Anomaly: Null</Typography>
+        <Typography variant="caption">Cycle Anomaly: Null</Typography>
       </Box>
 
       <Box display="flex" alignItems="center" gap={0.5}>

@@ -12,22 +12,43 @@ const ScatterChart = ({ data, threshold, onPointClick }) => {
     const height = 350;
     const margin = { top: 20, right: 20, bottom: 40, left: 50 };
 
+    // calculate the data x-time range in milliseconds
+    const xTimes = data.map((d) => d.x * 1000);
+    const timeMin = d3.min(xTimes);
+    const timeMax = d3.max(xTimes);
+
+    // optionally calculate time step for ideal signal alignment
+    const totalDuration = timeMax - timeMin;
+    const approxPoints = 20;
+    const timeStep = totalDuration / approxPoints;
+
+
     const x = d3
       .scaleTime()
-      .domain(d3.extent(data, (d) => new Date(d.x * 1000)))
+      .domain([timeMin, timeMax])
       .range([margin.left, width - margin.right]);
+
+    // add buffer above and below Y values
+    const yMax = d3.max(data, (d) => d.y);
+    const yMin = d3.min(data, (d) => d.y);
+    const yBuffer = (yMax - yMin) * 0.1;
 
     const y = d3
       .scaleLinear()
-      .domain([0, d3.max(data, (d) => d.y)])
+      .domain([Math.max(0, yMin - yBuffer), yMax + yBuffer])
       .range([height - margin.bottom, margin.top]);
 
-    const xAxis = d3.axisBottom(x);
+    const xAxis = d3
+      .axisBottom(x)
+      .ticks(d3.timeWeek.every(1))
+      .tickFormat(d3.timeFormat("%b %d"));
+
     const yAxis = d3.axisLeft(y);
 
     svg
       .append("g")
       .attr("transform", `translate(0,${height - margin.bottom})`)
+      .attr("class", "x-axis")
       .call(xAxis);
 
     svg
@@ -52,17 +73,18 @@ const ScatterChart = ({ data, threshold, onPointClick }) => {
       .text("Values");
 
     // threshold line
-    if (threshold !== undefined) {
-      svg
-        .append("line")
-        .attr("x1", margin.left)
-        .attr("x2", width - margin.right)
-        .attr("y1", y(threshold))
-        .attr("y2", y(threshold))
-        .attr("stroke", "red")
-        .attr("stroke-width", 2)
-        .attr("stroke-dasharray", "4 4");
-    }
+    // always draw a threshold line above the highest data point
+    const thresholdLine = yMax + yBuffer / 2;
+
+    svg
+      .append("line")
+      .attr("x1", margin.left)
+      .attr("x2", width - margin.right)
+      .attr("y1", y(thresholdLine))
+      .attr("y2", y(thresholdLine))
+      .attr("stroke", "red")
+      .attr("stroke-width", 2)
+      .attr("stroke-dasharray", "4 4");
 
     // zoom
     const zoom = d3
@@ -96,9 +118,8 @@ const ScatterChart = ({ data, threshold, onPointClick }) => {
         d3.select("#tooltip")
           .style("opacity", 1)
           .html(
-            `cycleId: ${d.cycleId}<br/>y: ${d.y.toFixed(
-              2
-            )}<br/>time: ${new Date(d.x * 1000).toLocaleString()}`
+            `time: ${new Date(d.x * 1000).toLocaleString()}<br/>
+   value: ${d.y.toFixed(2)}`
           )
           .style("left", event.pageX + "px")
           .style("top", event.pageY - 28 + "px");
@@ -112,8 +133,16 @@ const ScatterChart = ({ data, threshold, onPointClick }) => {
       });
 
     function zoomed(event) {
-      gPoints.attr("transform", event.transform);
-      gPoints.selectAll("circle").attr("r", 2 / transform.k);
+      const transform = event.transform;
+
+      const zx = transform.rescaleX(x);
+
+      svg.select(".x-axis").call(xAxis.scale(zx));
+
+      gPoints
+        .selectAll("circle")
+        .attr("cx", (d) => zx(new Date(d.x * 1000)))
+        .attr("cy", (d) => y(d.y));
     }
   }, [data, threshold, onPointClick]);
 

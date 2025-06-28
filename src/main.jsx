@@ -4,13 +4,17 @@ import "./index.css";
 import App from "./App.jsx";
 import { BrowserRouter } from "react-router-dom";
 import { SnackbarProvider } from "notistack";
+import ErrorBoundary from "./Components/ErrorBoundary/ErrorBoundary.jsx";
+import ErrorFallback from "./Components/ErrorBoundary/ErrorFallback.jsx";
 
 createRoot(document.getElementById("root")).render(
   <StrictMode>
-    <SnackbarProvider maxSnack={3}>
-      <BrowserRouter>
-        <App />
-      </BrowserRouter>
-    </SnackbarProvider>
+    <ErrorBoundary FallbackComponent={ErrorFallback}>
+      <SnackbarProvider maxSnack={3}>
+        <BrowserRouter>
+          <App />
+        </BrowserRouter>
+      </SnackbarProvider>
+    </ErrorBoundary>
   </StrictMode>
 );

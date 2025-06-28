@@ -6,7 +6,7 @@ function filterDataByTool(predictionData, changelogData, selectedToolSequence) {
       x: parseInt(epochTime),
       y: cycle.data[selectedToolSequence]?.distance,
       anomaly: cycle.data[selectedToolSequence]?.anomaly,
-      cycleId: epochTime,
+      cycleId: cycle.cycle_log_id,
     })
   );
 

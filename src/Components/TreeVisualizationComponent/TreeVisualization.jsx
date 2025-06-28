@@ -8,23 +8,23 @@ import {
   MarkerType,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import {getNodeColor} from "../../utils/getNodeColor";
+import { getNodeColor } from "../../utils/getNodeColor";
 import {
   Box,
-  SpeedDial,
-  SpeedDialAction,
-  SpeedDialIcon,
+  Paper,
   TextField,
   MenuItem,
   Select,
   InputLabel,
   FormControl,
   Button,
-  Fab
+  Fab,
+  Tooltip,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import SaveIcon from "@mui/icons-material/Save";
 import CancelIcon from "@mui/icons-material/Close";
+import MenuSharpIcon from "@mui/icons-material/MenuSharp";
 import fetchMockData from "../../services/fetchMockData";
 
 const TreeVisualization = () => {
@@ -34,6 +34,8 @@ const TreeVisualization = () => {
   const [selectedNode, setSelectedNode] = useState(null);
   const [editValues, setEditValues] = useState({});
   const [editing, setEditing] = useState(false);
+  const [disconnectedNodes, setDisconnectedNodes] = useState([]);
+  const [showDisconnected, setShowDisconnected] = useState(false);
 
   useEffect(() => {
     fetchMockData()
@@ -43,7 +45,6 @@ const TreeVisualization = () => {
       })
       .catch((error) => console.error("Error loading data:", error));
   }, []);
-
 
   const handleOpenEdit = (event, node) => {
     event.stopPropagation();
@@ -60,7 +61,6 @@ const TreeVisualization = () => {
     setEditing(true);
   };
 
-  // Function to update data and refresh the graph
   const updateDataAndRefresh = () => {
     const updatedMap = rawData.prod_machine_map.map((m) =>
       m.id === Number(selectedNode.id)
@@ -92,80 +92,95 @@ const TreeVisualization = () => {
     setEditing(false);
   };
 
-  // Generate node layout and edges
-  const generateGraph = useCallback((data) => {
-    // Recursively find how deep a node is in the graph (for layout)
-    const getDepth = (nodeId, visited = new Set()) => {
-      const node = data.prod_machine_map.find((m) => m.id === nodeId);
-      if (!node || !node.input_stations.length || visited.has(nodeId)) return 0;
-      visited.add(nodeId);
-      return (
-        1 + Math.max(...node.input_stations.map((id) => getDepth(id, visited)))
-      );
-    };
-
-    const levelCount = {};
-
-    const nodes = data.prod_machine_map.map((m) => {
-      const depth = getDepth(m.id);
-      levelCount[depth] = (levelCount[depth] || 0) + 1;
-      const y = depth * 180; // vertical spacing between levels
-      const x = (levelCount[depth] - 1) * 250; // horizontal spacing
-
-      return {
-        id: String(m.id),
-        position: { x, y },
-        data: {
-          ...m,
-          machine_id: m.machine_id,
-          name: m.name,
-          station_number: m.station_number,
-        },
-        style: {
-          background: getNodeColor(m.machine_id, data.bypass_list, data.not_allowed_list),
-          border: "1px solid #000",
-          borderRadius: 10,
-          padding: 10,
-          width: 180,
-        },
-        sourcePosition: "bottom",
-        targetPosition: "top",
+  const generateGraph = useCallback(
+    (data) => {
+      const getDepth = (nodeId, visited = new Set()) => {
+        const node = data.prod_machine_map.find((m) => m.id === nodeId);
+        if (!node || !node.input_stations.length || visited.has(nodeId))
+          return 0;
+        visited.add(nodeId);
+        return (
+          1 +
+          Math.max(...node.input_stations.map((id) => getDepth(id, visited)))
+        );
       };
-    });
 
-    const edges = data.prod_machine_map.flatMap((m) =>
-      m.input_stations.map((inputId) => ({
-        id: `e${inputId}-${m.id}`,
-        source: String(inputId),
-        target: String(m.id),
-        markerEnd: {
-          type: MarkerType.ArrowClosed,
-        },
-      }))
-    );
+      const levelCount = {};
 
-    setNodes(nodes);
-    setEdges(edges);
-  }, []);
+      const nodes = data.prod_machine_map.map((m) => {
+        const depth = getDepth(m.id);
+        levelCount[depth] = (levelCount[depth] || 0) + 1;
+        const y = depth * 180;
+        const x = (levelCount[depth] - 1) * 250;
 
-  // Regenerate graph every time rawData updates
+        return {
+          id: String(m.id),
+          position: { x, y },
+          data: {
+            ...m,
+            machine_id: m.machine_id,
+            name: m.name,
+            station_number: m.station_number,
+          },
+          style: {
+            background: getNodeColor(
+              m.machine_id,
+              data.bypass_list,
+              data.not_allowed_list
+            ),
+            border: "1px solid #000",
+            borderRadius: 10,
+            padding: 10,
+            width: 180,
+          },
+          sourcePosition: "bottom",
+          targetPosition: "top",
+        };
+      });
+
+      const edges = data.prod_machine_map.flatMap((m) =>
+        m.input_stations.map((inputId) => ({
+          id: `e${inputId}-${m.id}`,
+          source: String(inputId),
+          target: String(m.id),
+          markerEnd: {
+            type: MarkerType.ArrowClosed,
+          },
+        }))
+      );
+
+      setNodes(nodes);
+      setEdges(edges);
+
+      // detect disconnected
+      const connectedIds = new Set(edges.flatMap((e) => [e.source, e.target]));
+      const disconnected = nodes.filter((n) => !connectedIds.has(n.id));
+      setDisconnectedNodes(disconnected);
+    },
+    [setNodes, setEdges]
+  );
+
   useEffect(() => {
     if (rawData) {
       generateGraph(rawData);
-      console.log("Nodes:", nodes);
-      console.log("Edges:", edges);
     }
   }, [rawData, generateGraph]);
 
   return (
-    <Box sx={{ width: "100%", height: 600 }}>
+    <Box sx={{ width: "100%", height: 600, position: "relative" }}>
       <ReactFlow
         nodes={nodes.map((node) => ({
           ...node,
           data: {
             ...node.data,
             label: (
-              <div style={{ padding: 4, textAlign: "center", position: "relative" }}>
+              <div
+                style={{
+                  padding: 4,
+                  textAlign: "center",
+                  position: "relative",
+                }}
+              >
                 <strong>{node.data.station_number}</strong>
                 <br />
                 <span>{node.data.name}</span>
@@ -190,7 +205,58 @@ const TreeVisualization = () => {
         <Background gap={16} />
       </ReactFlow>
 
-      {/* Floating edit panel (appears when editing a node) */}
+      <Box sx={{ position: "absolute", top: 10, right: 10 }}>
+        <Tooltip title="View Disconnected nodes">
+          <MenuSharpIcon
+            onClick={() => setShowDisconnected(!showDisconnected)}
+            style={{ cursor: "pointer" }}
+          />
+        </Tooltip>
+      </Box>
+
+      {showDisconnected && disconnectedNodes.length > 0 && (
+        <Box
+          sx={{
+            mt: 2,
+            p: 2,
+            backgroundColor: "#f9f9f9",
+            border: "1px solid #ddd",
+            borderRadius: 2,
+            position: "absolute",
+            top: 50,
+            right: 10,
+            maxWidth: 300,
+            zIndex: 1000,
+          }}
+        >
+          <strong>Disconnected Nodes:</strong>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 1,
+              mt: 1,
+              maxHeight: 300,
+              overflowY: "auto",
+            }}
+          >
+            {disconnectedNodes.map((n) => (
+              <Box
+                key={n.id}
+                sx={{
+                  p: 1,
+                  border: "1px dashed grey",
+                  borderRadius: 1,
+                  minWidth: 100,
+                }}
+              >
+                {n.data?.station_number} - {n.data?.name}
+              </Box>
+            ))}
+          </Box>
+        </Box>
+      )}
+
       {editing && selectedNode && (
         <Box
           sx={{
