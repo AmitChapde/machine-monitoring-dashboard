@@ -31,6 +31,8 @@ const ScatterChart = lazy(() =>
   import("../Components/ScatterPlot/ScatterChart")
 );
 
+// This component displays a page with a scatter chart and a time series graph,
+// allowing users to filter data by machine, time, and tool.
 const ScatterPage = () => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("md"));
@@ -47,12 +49,11 @@ const ScatterPage = () => {
   const [rawPrediction, setRawPrediction] = useState(null);
   const [rawChangeLog, setRawChangeLog] = useState(null);
   const [scatterData, setScatterData] = useState({});
-  // const [showComparison, setShowComparison] = useState(false);
   const [selectedCycle, setSelectedCycle] = useState(null);
   const [actualSignal, setActualSignal] = useState(null);
   const [idealSignal, setIdealSignal] = useState(null);
   const [selectedAnomaly, setSelectedAnomaly] = useState(null);
-
+  const [triggerFetch, setTriggerFetch] = useState(0);
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -67,9 +68,13 @@ const ScatterPage = () => {
           to_time: toTime,
         });
 
+        // Update state with raw fetched data.
         setRawPrediction(prediction);
+        
         setRawChangeLog(changeLog);
+        console.log("ChangeLog data fetched:", changeLog);
 
+        // Process tool options from the change log data.
         const toolMap = changeLog?.Result?.length
           ? changeLog.Result[0]?.config_parameters?.tool_sequence_map
           : null;
@@ -81,6 +86,7 @@ const ScatterPage = () => {
           }));
           setToolOptions(toolOpts);
 
+          //set the first tool as selected
           if (!toolOpts.find((t) => t.id === selectedTool)) {
             setSelectedTool(toolOpts[0]?.id ?? "");
           }
@@ -89,6 +95,7 @@ const ScatterPage = () => {
           setSelectedTool("");
         }
 
+        // Process unprocessed sequences from the prediction data.
         const unprocessedArray = Object.entries(
           prediction.unprocessed_sequences
         ).map(([toolId, count]) => ({
@@ -104,6 +111,7 @@ const ScatterPage = () => {
     fetchData();
   }, [machineId, fromTime, toTime]);
 
+  //  the ideal signal for the time series graph
   useEffect(() => {
     if (!selectedTool || !rawChangeLog) return;
 
@@ -113,9 +121,16 @@ const ScatterPage = () => {
     setIdealSignal(ideal);
   }, [selectedTool, rawChangeLog]);
 
+  //the actual signal for the time series graph
   useEffect(() => {
     const fetchActualSignal = async () => {
-      if (!selectedCycle || selectedAnomaly == null) return;
+      console.log("Entering fetchActualSignal function.");
+      if (!selectedCycle || selectedAnomaly == null) {
+        console.log(
+          "fetchActualSignal: Aborting due to missing selectedCycle or selectedAnomaly."
+        );
+        return;
+      }
 
       try {
         const anomalyType =
@@ -125,47 +140,43 @@ const ScatterPage = () => {
             ? "green"
             : "black";
 
+        console.log(
+          `fetchActualSignal: Calling getCycleData with machine_id: ${machineId}, cyclelog_id: ${selectedCycle}, anomalyType: ${anomalyType}`
+        );
         const response = await getCycleData({
           machine_id: machineId,
           cyclelog_id: selectedCycle,
           signal: "spindle_1_load",
           anomalyType,
         });
+        console.log("Raw API response for actual signal :", response);
 
-        const rawCycleData =
-          response?.Result?.data?.[selectedCycle]?.cycle_data?.spindle_1_load ??
-          {};
+        const rawCycleData = response ?? {}; 
+        
 
+        console.log("Extracted rawCycleData:", rawCycleData);
         const mapped = Object.entries(rawCycleData).map(([x, y]) => ({
           x: Number.parseFloat(x),
           y,
         }));
 
         if (!rawCycleData || Object.keys(rawCycleData).length === 0) {
-          enqueueSnackbar(
-            "No time series data available for the selected cycle.",
-            {
-              variant: "warning",
-            }
-          );
+          
           return;
         }
 
         setActualSignal(mapped);
+        console.log("Mapped data before setting state:", mapped);
+        console.log("Actual signal data set in state.");
       } catch (err) {
         console.error("Error fetching timeseries cycle data", err);
-        enqueueSnackbar(
-          "No time series data available for the selected cycle.",
-          {
-            variant: "error",
-          }
-        );
       }
     };
 
     fetchActualSignal();
-  }, [selectedCycle, selectedAnomaly]);
+  }, [selectedCycle, selectedAnomaly, triggerFetch]);
 
+  //Search button handler
   const handleSearch = () => {
     if (!fromTime || !toTime) {
       enqueueSnackbar("Please select both start and end times.", {
@@ -381,6 +392,7 @@ const ScatterPage = () => {
                   console.log("clicked cycle id", cycleId, anomaly);
                   setSelectedCycle(cycleId);
                   setSelectedAnomaly(anomaly);
+                  setTriggerFetch((prev) => prev + 1);
                 }}
               />
 
@@ -402,7 +414,7 @@ const ScatterPage = () => {
         )}
       </Paper>
 
-      {/* Graph 2 */}
+      {/* Timeseries Graph */}
       <Paper
         sx={{
           p: { xs: 1, sm: 2, md: 3 },

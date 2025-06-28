@@ -1,5 +1,5 @@
-
-
+// This function filters and prepares data for a scatter plot based on a selected tool sequence.
+// It combines information from prediction and changelog data.
 function filterDataByTool(predictionData, changelogData, selectedToolSequence) {
   const scatterPoints = Object.entries(predictionData.cycles).map(
     ([epochTime, cycle]) => ({
@@ -10,12 +10,15 @@ function filterDataByTool(predictionData, changelogData, selectedToolSequence) {
     })
   );
 
+  // Get learned parameters (like threshold and ideal signal) for the selected tool from the changelog.
   const learnedParams =
     changelogData?.Result?.[0]?.learned_parameters?.[selectedToolSequence];
   const configParams =
     changelogData?.Result?.[0]?.config_parameters?.sequence?.[
       selectedToolSequence
     ];
+
+  // Return a structured object containing all the data needed for the scatter plot and related graphs.
 
   return {
     scatterData: scatterPoints,

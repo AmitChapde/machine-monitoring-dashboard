@@ -1,6 +1,7 @@
 import { Typography, Paper, Box } from "@mui/material";
 import TreeVisualization from "../Components/TreeVisualizationComponent/TreeVisualization";
 
+// This is the main page for the Tree Visualizer 
 const TreePage = () => {
   return (
     <Box>

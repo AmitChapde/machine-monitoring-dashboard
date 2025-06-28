@@ -1,6 +1,5 @@
 import { Box, Paper, Typography } from "@mui/material";
 import CircleIcon from "@mui/icons-material/Circle";
-import ChangeHistoryIcon from "@mui/icons-material/ChangeHistory";
 import HorizontalRuleIcon from "@mui/icons-material/HorizontalRule";
 
 export default function ScatterLegend() {

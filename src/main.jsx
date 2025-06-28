@@ -7,6 +7,7 @@ import { SnackbarProvider } from "notistack";
 import ErrorBoundary from "./Components/ErrorBoundary/ErrorBoundary.jsx";
 import ErrorFallback from "./Components/ErrorBoundary/ErrorFallback.jsx";
 
+
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <ErrorBoundary FallbackComponent={ErrorFallback}>

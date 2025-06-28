@@ -1,6 +1,7 @@
 import React, { useRef, useEffect } from "react";
 import * as d3 from "d3";
 
+// This component creates a D3.js scatter chart within a React component.
 const ScatterChart = ({ data, threshold, onPointClick }) => {
   const ref = useRef();
 
@@ -8,27 +9,28 @@ const ScatterChart = ({ data, threshold, onPointClick }) => {
     const svg = d3.select(ref.current);
     svg.selectAll("*").remove();
 
+     // chart dimensions and margins.
     const width = 1200;
     const height = 350;
     const margin = { top: 20, right: 20, bottom: 40, left: 50 };
 
-    // calculate the data x-time range in milliseconds
+    // Set up the x-axis (time scale)
     const xTimes = data.map((d) => d.x * 1000);
     const timeMin = d3.min(xTimes);
     const timeMax = d3.max(xTimes);
 
-    // optionally calculate time step for ideal signal alignment
+    // calculate time step for ideal signal alignment
     const totalDuration = timeMax - timeMin;
     const approxPoints = 20;
     const timeStep = totalDuration / approxPoints;
 
-
+    
     const x = d3
       .scaleTime()
       .domain([timeMin, timeMax])
       .range([margin.left, width - margin.right]);
 
-    // add buffer above and below Y values
+    // Set up the y-axis (linear scale).
     const yMax = d3.max(data, (d) => d.y);
     const yMin = d3.min(data, (d) => d.y);
     const yBuffer = (yMax - yMin) * 0.1;
@@ -38,11 +40,13 @@ const ScatterChart = ({ data, threshold, onPointClick }) => {
       .domain([Math.max(0, yMin - yBuffer), yMax + yBuffer])
       .range([height - margin.bottom, margin.top]);
 
+    // Create and add the x-axis
     const xAxis = d3
       .axisBottom(x)
       .ticks(d3.timeWeek.every(1))
       .tickFormat(d3.timeFormat("%b %d"));
 
+    // Create and add the y-axis
     const yAxis = d3.axisLeft(y);
 
     svg
@@ -56,6 +60,7 @@ const ScatterChart = ({ data, threshold, onPointClick }) => {
       .attr("transform", `translate(${margin.left},0)`)
       .call(yAxis);
 
+      //X label
     svg
       .append("text")
       .attr("text-anchor", "middle")
@@ -98,8 +103,10 @@ const ScatterChart = ({ data, threshold, onPointClick }) => {
 
     svg.call(zoom);
 
+     // Create a group for the data points with a clip path.
     const gPoints = svg.append("g").attr("clip-path", "url(#clip)");
 
+     // Draw the data points as circles.
     gPoints
       .selectAll("circle")
       .data(data)
@@ -107,6 +114,7 @@ const ScatterChart = ({ data, threshold, onPointClick }) => {
       .attr("cx", (d) => x(new Date(d.x * 1000)))
       .attr("cy", (d) => y(d.y))
       .attr("r", 2)
+      // Color points based on whether they are an anomaly.
       .attr("fill", (d) => {
         if (d.anomaly === true) return "#c62828";
         if (d.anomaly === false) return "#4caf50";
@@ -132,6 +140,7 @@ const ScatterChart = ({ data, threshold, onPointClick }) => {
         onPointClick?.(d.cycleId, d.anomaly);
       });
 
+      // Zoom function to update positions on zoom.
     function zoomed(event) {
       const transform = event.transform;
 

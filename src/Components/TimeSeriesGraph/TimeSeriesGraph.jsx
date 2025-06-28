@@ -5,46 +5,77 @@ const TimeSeriesGraph = ({ actualData, idealData }) => {
   const ref = useRef();
 
   useEffect(() => {
-    if (!actualData || actualData.length === 0) return;
- 
+    if (
+      !actualData ||
+      Object.keys(actualData).length === 0 ||
+      !idealData ||
+      idealData.length === 0
+    ) {
+      console.log(
+        "TimeSeriesGraph: Waiting for both actualData and idealData to be available."
+      );
+      return; // Abort the render until both data sets are ready
+    }
 
-    const svg = d3.select(ref.current);
-    svg.selectAll("*").remove();
+    console.log("Actual Data Received:", actualData);
+    console.log("Ideal Data Received:", idealData);
+
+    // transform actual data (object of time:value)
+
+    const actualDataArray = actualData;
+
+    actualDataArray.sort((a, b) => a.x - b.x);
+
+    const timeKeys = actualDataArray.map((d) => d.x);
+
+    // transform ideal data, align to same time points
+    const idealXY = idealData
+      .map((y, i) => {
+        // Check if the corresponding x value exists.
+        if (timeKeys[i] !== undefined) {
+          return {
+            x: timeKeys[i],
+            y: Number.parseFloat(y),
+          };
+        }
+        // Return null for points that don't have an x coordinate.
+        return null;
+      })
+      // Filter out all the null entries.
+      .filter((d) => d !== null);
+
+    console.log("Ideal Data after mapping (inspect for NaN):", idealXY);
+
+    const combinedData = [...actualDataArray, ...idealXY];
 
     const width = 1000;
     const height = 400;
     const margin = { top: 20, right: 30, bottom: 40, left: 50 };
 
-    // transform idealData to x/y pairs
-    const idealXY = idealData.map((y, i) => ({ x: i, y }));
+    const svg = d3.select(ref.current);
+    svg.selectAll("*").remove();
 
-    const combinedData = [...actualData, ...idealXY];
-
-    // scales
+    // x scale
     const xScale = d3
       .scaleLinear()
-      .domain([
-        d3.min(combinedData, (d) => d.x),
-        d3.max(combinedData, (d) => d.x),
-      ])
+      .domain(d3.extent(combinedData, (d) => d.x)) // Use d3.extent for a robust domain
       .nice()
       .range([margin.left, width - margin.right]);
 
+    // y scale
     const yScale = d3
       .scaleLinear()
-      .domain([
-        0,
-        d3.max(combinedData, (d) => d.y),
-      ])
+      .domain([0, d3.max(combinedData, (d) => d.y)])
       .nice()
       .range([height - margin.bottom, margin.top]);
 
-    // axes
+    // x axis
     svg
       .append("g")
       .attr("transform", `translate(0,${height - margin.bottom})`)
       .call(d3.axisBottom(xScale));
 
+    // y axis
     svg
       .append("g")
       .attr("transform", `translate(${margin.left},0)`)
@@ -56,7 +87,7 @@ const TimeSeriesGraph = ({ actualData, idealData }) => {
       .attr("x", width / 2)
       .attr("y", height - 5)
       .attr("text-anchor", "middle")
-      .text("Time (seconds)");
+      .text("Time)");
 
     svg
       .append("text")
@@ -64,7 +95,7 @@ const TimeSeriesGraph = ({ actualData, idealData }) => {
       .attr("x", -height / 2)
       .attr("y", 15)
       .attr("text-anchor", "middle")
-      .text("Signal Strength");
+      .text("values");
 
     // line generator
     const lineGenerator = d3
@@ -73,26 +104,26 @@ const TimeSeriesGraph = ({ actualData, idealData }) => {
       .y((d) => yScale(d.y))
       .curve(d3.curveMonotoneX);
 
-    // actual data line
+    // plot actual
     svg
       .append("path")
-      .datum(actualData)
+      .datum(actualDataArray)
       .attr("fill", "none")
       .attr("stroke", "#1e88e5")
       .attr("stroke-width", 2)
       .attr("d", lineGenerator);
 
-    // ideal data line
+    // plot ideal
     svg
       .append("path")
       .datum(idealXY)
       .attr("fill", "none")
-      .attr("stroke", "#43a047")
+      .attr("stroke", "#B2EBF2")
       .attr("stroke-width", 2)
       .attr("stroke-dasharray", "5 5")
       .attr("d", lineGenerator);
 
-    // points + tooltip
+    // tooltip
     const tooltip = d3
       .select("#timeseries-tooltip")
       .style("position", "absolute")
@@ -104,12 +135,12 @@ const TimeSeriesGraph = ({ actualData, idealData }) => {
 
     svg
       .selectAll("circle")
-      .data(actualData)
+      .data(actualDataArray)
       .join("circle")
       .attr("cx", (d) => xScale(d.x))
       .attr("cy", (d) => yScale(d.y))
       .attr("r", 3)
-      .attr("fill", "#1e88e5")
+      .attr("fill", "#0091EA")
       .on("mouseenter", (event, d) => {
         tooltip
           .style("opacity", 1)
@@ -125,7 +156,7 @@ const TimeSeriesGraph = ({ actualData, idealData }) => {
   return (
     <>
       <svg ref={ref} width={1000} height={400}></svg>
-      
+      <div id="timeseries-tooltip"></div>
     </>
   );
 };

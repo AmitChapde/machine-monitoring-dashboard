@@ -5,6 +5,7 @@ import TreePage from "./Pages/TreePage";
 
 function App() {
   return (
+    // The main App component sets up the routing for the application.
     <Routes>
       <Route element={<Layout />}>
         <Route path="/" element={<ScatterPage />} />

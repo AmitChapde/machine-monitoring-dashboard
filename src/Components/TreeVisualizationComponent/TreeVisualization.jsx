@@ -27,6 +27,7 @@ import CancelIcon from "@mui/icons-material/Close";
 import MenuSharpIcon from "@mui/icons-material/MenuSharp";
 import fetchMockData from "../../services/fetchMockData";
 
+// This component visualizes a production machine map as a tree graph using React Flow.
 const TreeVisualization = () => {
   const [rawData, setRawData] = useState(null);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -46,7 +47,9 @@ const TreeVisualization = () => {
       .catch((error) => console.error("Error loading data:", error));
   }, []);
 
+    // Handle opening the edit panel for a node.
   const handleOpenEdit = (event, node) => {
+    // Prevent React Flow from handling the click.
     event.stopPropagation();
     setSelectedNode(node);
     setEditValues({
@@ -61,6 +64,7 @@ const TreeVisualization = () => {
     setEditing(true);
   };
 
+   // Function to save the edited node data and refresh the graph.
   const updateDataAndRefresh = () => {
     const updatedMap = rawData.prod_machine_map.map((m) =>
       m.id === Number(selectedNode.id)
@@ -72,6 +76,7 @@ const TreeVisualization = () => {
         : m
     );
 
+    // Update the bypass and not_allowed lists based on the new category.
     const machine_id = selectedNode.data.machine_id;
     const newBypass = rawData.bypass_list.filter((id) => id !== machine_id);
     const newNotAllowed = rawData.not_allowed_list.filter(
@@ -87,11 +92,13 @@ const TreeVisualization = () => {
       bypass_list: newBypass,
       not_allowed_list: newNotAllowed,
     });
+    
 
     setSelectedNode(null);
     setEditing(false);
   };
 
+  //Memoizing the graph generation function 
   const generateGraph = useCallback(
     (data) => {
       const getDepth = (nodeId, visited = new Set()) => {
@@ -107,6 +114,7 @@ const TreeVisualization = () => {
 
       const levelCount = {};
 
+      // Create React Flow nodes from the raw data.
       const nodes = data.prod_machine_map.map((m) => {
         const depth = getDepth(m.id);
         levelCount[depth] = (levelCount[depth] || 0) + 1;
@@ -138,6 +146,7 @@ const TreeVisualization = () => {
         };
       });
 
+       // Create React Flow edges (connections) from the raw data.
       const edges = data.prod_machine_map.flatMap((m) =>
         m.input_stations.map((inputId) => ({
           id: `e${inputId}-${m.id}`,
@@ -152,7 +161,7 @@ const TreeVisualization = () => {
       setNodes(nodes);
       setEdges(edges);
 
-      // detect disconnected
+      // detect disconnected nodes
       const connectedIds = new Set(edges.flatMap((e) => [e.source, e.target]));
       const disconnected = nodes.filter((n) => !connectedIds.has(n.id));
       setDisconnectedNodes(disconnected);
@@ -205,6 +214,7 @@ const TreeVisualization = () => {
         <Background gap={16} />
       </ReactFlow>
 
+        {/* Disconnected Nodes */}
       <Box sx={{ position: "absolute", top: 10, right: 10 }}>
         <Tooltip title="View Disconnected nodes">
           <MenuSharpIcon
@@ -257,6 +267,7 @@ const TreeVisualization = () => {
         </Box>
       )}
 
+      {/* Edit Node Panel */}
       {editing && selectedNode && (
         <Box
           sx={{
