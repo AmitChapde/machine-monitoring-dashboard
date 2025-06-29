@@ -195,15 +195,15 @@ By default, Vite will serve on [http://localhost:5173](http://localhost:5173).
 
 ### 🟢 Scatter Plot Page
 
-![Scatter Plot](public/Screenshots/Screenshot2.PNG)
+![Scatter Plot](public/Screenshots/screenshot2.PNG)
 
 ### 🟢 Tree Visualization Page
 
-![Tree Visualization](public/Screenshots/Screenshot3.PNG)
+![Tree Visualization](public/Screenshots/screenshot3.PNG)
 
 ### 🟢 Time Series Graph
 
-![Time Series](public/Screenshots/Screenshot4.PNG)
+![Time Series](public/Screenshots/screenshot4.PNG)
 
 ---
 
