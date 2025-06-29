@@ -17,6 +17,9 @@ import {
   Switch,
   FormControlLabel,
 } from "@mui/material";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
+import { TimePicker } from "@mui/x-date-pickers/TimePicker";
 import filterDataByTool from "../utils/filterDataByTool";
 import {
   getChangeLogData,
@@ -181,10 +184,16 @@ const ScatterPage = () => {
     setFromTime(combinedDateTime);
   };
 
-  const handleFromTimeChange = (e) => {
-    const newTime = e.target.value;
+  const handleFromTimeChange = (newValue) => {
+    // This now receives a Date object from TimePicker
+    // We convert it back to your original "HH:MM" string format
+    const newTime = newValue
+      ? `${newValue.getHours().toString().padStart(2, "0")}:${newValue
+          .getMinutes()
+          .toString()
+          .padStart(2, "0")}`
+      : "";
     setFromTimeTime(newTime);
-
     if (fromTimeDate) {
       const combinedDateTime = `${fromTimeDate}T${newTime}`;
       setFromTime(combinedDateTime);
@@ -200,8 +209,15 @@ const ScatterPage = () => {
     setToTime(combinedDateTime);
   };
 
-  const handleToTimeChange = (e) => {
-    const newTime = e.target.value;
+  const handleToTimeChange = (newValue) => {
+    // This now receives a Date object from TimePicker
+    // We convert it back to your original "HH:MM" string format
+    const newTime = newValue
+      ? `${newValue.getHours().toString().padStart(2, "0")}:${newValue
+          .getMinutes()
+          .toString()
+          .padStart(2, "0")}`
+      : "";
     setToTimeTime(newTime);
     if (toTimeDate) {
       const combinedDateTime = `${toTimeDate}T${newTime}`;
@@ -213,6 +229,15 @@ const ScatterPage = () => {
   const handleSearch = () => {
     if (!fromTime || !toTime) {
       enqueueSnackbar("Please select both start and end times.", {
+        variant: "error",
+      });
+      return;
+    }
+    const fromDateTime = new Date(fromTime);
+    const toDateTime = new Date(toTime);
+
+    if (fromDateTime >= toDateTime) {
+      enqueueSnackbar("Start time must be before end time.", {
         variant: "error",
       });
       return;
@@ -233,151 +258,17 @@ const ScatterPage = () => {
   };
 
   return (
-    <Box
-      sx={{
-        p: { xs: 1, sm: 2, md: 3 },
-        maxWidth: "100%",
-        overflow: "hidden",
-      }}
-    >
-      {/* Filters */}
-      <Paper
-        elevation={1}
+    <LocalizationProvider dateAdapter={AdapterDateFns}>
+      <Box
         sx={{
-          p: { xs: 2, sm: 2.5, md: 3 },
-          mt: 2,
-          borderRadius: 2,
+          p: { xs: 1, sm: 2, md: 3 },
+          maxWidth: "100%",
           overflow: "hidden",
         }}
       >
-        <Grid container spacing={2} alignItems="center">
-          <Grid item xs={12} sm={6} md={3}>
-            <FormControl fullWidth>
-              <InputLabel id="machine-label">Machine</InputLabel>
-              <Select
-                labelId="machine-label"
-                value={machineId}
-                label="Machine"
-                onChange={(e) => setMachineId(e.target.value)}
-                size={isMobile ? "small" : "medium"}
-              >
-                <MenuItem value="SSP0173">SSP0173</MenuItem>
-                <MenuItem value="SSP0167">SSP0167</MenuItem>
-              </Select>
-            </FormControl>
-          </Grid>
-
-          <Grid item xs={12} sm={6} md={3}>
-            <Grid container spacing={1}>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Start Date"
-                  type="date"
-                  InputLabelProps={{ shrink: true }}
-                  value={fromTimeDate}
-                  onChange={handleFromDateChange}
-                  size={isMobile ? "small" : "medium"}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="Start Time"
-                  type="time"
-                  InputLabelProps={{ shrink: true }}
-                  value={fromTimeTime}
-                  onChange={handleFromTimeChange}
-                  size={isMobile ? "small" : "medium"}
-                />
-              </Grid>
-            </Grid>
-          </Grid>
-
-          <Grid item xs={12} sm={6} md={3}>
-            <Grid container spacing={1}>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="End Date"
-                  type="date"
-                  InputLabelProps={{ shrink: true }}
-                  value={toTimeDate}
-                  onChange={handleToDateChange}
-                  size={isMobile ? "small" : "medium"}
-                />
-              </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth
-                  label="End Time"
-                  type="time"
-                  InputLabelProps={{ shrink: true }}
-                  value={toTimeTime}
-                  onChange={handleToTimeChange}
-                  size={isMobile ? "small" : "medium"}
-                />
-              </Grid>
-            </Grid>
-          </Grid>
-
-          <Grid item xs={12} sm={6} md={2}>
-            <FormControl fullWidth>
-              <InputLabel id="tool-label">Tools</InputLabel>
-              <Select
-                labelId="tool-label"
-                value={selectedTool}
-                label="Tools"
-                onChange={(e) => setSelectedTool(e.target.value)}
-                size={isMobile ? "small" : "medium"}
-              >
-                {toolOptions.map((tool) => (
-                  <MenuItem key={tool.id} value={tool.id}>
-                    {tool.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </Grid>
-
-          <Grid item xs={12} md={1}>
-            <Button
-              fullWidth
-              variant="contained"
-              onClick={handleSearch}
-              size={isMobile ? "small" : "medium"}
-              sx={{
-                backgroundColor: "#272e3f",
-                color: "#fff",
-                borderColor: "#512DA8",
-                textTransform: "none",
-                minHeight: { xs: 36, sm: 40, md: 56 },
-              }}
-            >
-              Search
-            </Button>
-          </Grid>
-          <Grid item xs={12} md={1}>
-            <FormControlLabel
-              control={
-                <Switch
-                  checked={showComparison}
-                  onChange={(e) => setShowComparison(e.target.checked)}
-                  name="showComparison"
-                  color="primary"
-                  size={isMobile ? "small" : "medium"}
-                />
-              }
-              label="Show Comparison"
-              sx={{ ml: 0 }}
-            />
-          </Grid>
-        </Grid>
-      </Paper>
-
-      {/* Unprocessed Sequences */}
-      {unprocessedSequences && (
+        {/* Filters */}
         <Paper
+          elevation={1}
           sx={{
             p: { xs: 2, sm: 2.5, md: 3 },
             mt: 2,
@@ -385,164 +276,316 @@ const ScatterPage = () => {
             overflow: "hidden",
           }}
         >
-          <Stack
-            direction={{ xs: "column", sm: "row" }}
-            spacing={1}
-            alignItems={{ xs: "flex-start", sm: "center" }}
-            flexWrap="wrap"
-            useFlexGap
-          >
-            <Typography
-              variant="body1"
-              sx={{
-                mr: { sm: 1 },
-                mb: { xs: 1, sm: 0 },
-                fontSize: { xs: "0.875rem", md: "1rem" },
-              }}
-            >
-              Unprocessed Sequences:
-            </Typography>
-            <Box
-              sx={{
-                display: "flex",
-                flexWrap: "wrap",
-                gap: 1,
-                width: { xs: "100%", sm: "auto" },
-              }}
-            >
-              {unprocessedSequences.map((seq) => (
-                <Chip
-                  key={seq.toolId}
-                  label={`${seq.toolId}: ${seq.count}`}
-                  variant="filled"
+          <Grid container spacing={2} alignItems="center">
+            <Grid item xs={12} sm={6} md={3}>
+              <FormControl fullWidth>
+                <InputLabel id="machine-label">Machine</InputLabel>
+                <Select
+                  labelId="machine-label"
+                  value={machineId}
+                  label="Machine"
+                  onChange={(e) => setMachineId(e.target.value)}
                   size={isMobile ? "small" : "medium"}
-                  sx={{
-                    backgroundColor: "#673AB7",
-                    color: "#fff",
-                    borderColor: "#512DA8",
-                    fontWeight: "bold",
-                    fontSize: { xs: "0.75rem", md: "0.875rem" },
+                >
+                  <MenuItem value="SSP0173">SSP0173</MenuItem>
+                  <MenuItem value="SSP0167">SSP0167</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={3}>
+              <Grid container spacing={1}>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="Start Date"
+                    type="date"
+                    InputLabelProps={{ shrink: true }}
+                    value={fromTimeDate}
+                    onChange={handleFromDateChange}
+                    size={isMobile ? "small" : "medium"}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                                   {" "}
+                  <TimePicker
+                    label="Start Time"
+                    value={
+                      fromTimeTime
+                        ? new Date(`2000-01-01T${fromTimeTime}`)
+                        : null
+                    }
+                    onChange={handleFromTimeChange}
+                    ampm={true}
+                    slotProps={{
+                      textField: {
+                        fullWidth: true,
+                        size: isMobile ? "small" : "medium",
+                        InputLabelProps: { shrink: true },
+                      },
+                    }}
+                  />
+                </Grid>
+              </Grid>
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={3}>
+              <Grid container spacing={1}>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label="End Date"
+                    type="date"
+                    InputLabelProps={{ shrink: true }}
+                    value={toTimeDate}
+                    onChange={handleToDateChange}
+                    size={isMobile ? "small" : "medium"}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TimePicker
+                    label="End Time"
+                    value={
+                      toTimeTime ? new Date(`2000-01-01T${toTimeTime}`) : null
+                    }
+                    onChange={handleToTimeChange}
+                    ampm={true}
+                    slotProps={{
+                      textField: {
+                        fullWidth: true,
+                        size: isMobile ? "small" : "medium",
+                        InputLabelProps: { shrink: true },
+                      },
+                    }}
+                  />{" "}
+                   
+                </Grid>
+              </Grid>
+            </Grid>
+
+            <Grid item xs={12} sm={6} md={2}>
+              <FormControl fullWidth>
+                <InputLabel id="tool-label">Tools</InputLabel>
+                <Select
+                  labelId="tool-label"
+                  value={selectedTool}
+                  label="Tools"
+                  onChange={(e) => setSelectedTool(e.target.value)}
+                  size={isMobile ? "small" : "medium"}
+                >
+                  {toolOptions.map((tool) => (
+                    <MenuItem key={tool.id} value={tool.id}>
+                      {tool.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+
+            <Grid item xs={12} md={1}>
+              <Button
+                fullWidth
+                variant="contained"
+                onClick={handleSearch}
+                size={isMobile ? "small" : "medium"}
+                sx={{
+                  backgroundColor: "#272e3f",
+                  color: "#fff",
+                  borderColor: "#512DA8",
+                  textTransform: "none",
+                  minHeight: { xs: 36, sm: 40, md: 56 },
+                }}
+              >
+                Search
+              </Button>
+            </Grid>
+            <Grid item xs={12} md={1}>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={showComparison}
+                    onChange={(e) => setShowComparison(e.target.checked)}
+                    name="showComparison"
+                    color="primary"
+                    size={isMobile ? "small" : "medium"}
+                  />
+                }
+                label="Show Comparison"
+                sx={{ ml: 0 }}
+              />
+            </Grid>
+          </Grid>
+        </Paper>
+
+        {/* Unprocessed Sequences */}
+        {unprocessedSequences && (
+          <Paper
+            sx={{
+              p: { xs: 2, sm: 2.5, md: 3 },
+              mt: 2,
+              borderRadius: 2,
+              overflow: "hidden",
+            }}
+          >
+            <Stack
+              direction={{ xs: "column", sm: "row" }}
+              spacing={1}
+              alignItems={{ xs: "flex-start", sm: "center" }}
+              flexWrap="wrap"
+              useFlexGap
+            >
+              <Typography
+                variant="body1"
+                sx={{
+                  mr: { sm: 1 },
+                  mb: { xs: 1, sm: 0 },
+                  fontSize: { xs: "0.875rem", md: "1rem" },
+                }}
+              >
+                Unprocessed Sequences:
+              </Typography>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  gap: 1,
+                  width: { xs: "100%", sm: "auto" },
+                }}
+              >
+                {unprocessedSequences.map((seq) => (
+                  <Chip
+                    key={seq.toolId}
+                    label={`${seq.toolId}: ${seq.count}`}
+                    variant="filled"
+                    size={isMobile ? "small" : "medium"}
+                    sx={{
+                      backgroundColor: "#673AB7",
+                      color: "#fff",
+                      borderColor: "#512DA8",
+                      fontWeight: "bold",
+                      fontSize: { xs: "0.75rem", md: "0.875rem" },
+                    }}
+                  />
+                ))}
+              </Box>
+            </Stack>
+          </Paper>
+        )}
+
+        {/* Scatter Chart */}
+        <Paper
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            p: { xs: 1, sm: 2, md: 3 },
+            mt: 2,
+            borderRadius: 2,
+            alignItems: "center",
+            overflow: "hidden",
+            minHeight: { xs: 300, sm: 400, md: 500 },
+          }}
+        >
+          {scatterData.scatterData?.length > 0 ? (
+            <Suspense fallback={<Loader />}>
+              <Box
+                sx={{
+                  width: "100%",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: { xs: 1, md: 2 },
+                }}
+              >
+                <ScatterChart
+                  data={scatterData.scatterData}
+                  threshold={scatterData?.threshold}
+                  validationLimits={scatterData?.validationLimits}
+                  selectedTool={selectedTool}
+                  onPointClick={(cycleId, anomaly) => {
+                    console.log("clicked cycle id", cycleId, anomaly);
+                    setSelectedCycle(cycleId);
+                    setSelectedAnomaly(anomaly);
                   }}
                 />
-              ))}
-            </Box>
-          </Stack>
+
+                <ScatterLegend />
+              </Box>
+            </Suspense>
+          ) : (
+            <Typography
+              variant="body1"
+              color="textSecondary"
+              sx={{
+                textAlign: "center",
+                fontSize: { xs: "0.875rem", md: "1rem" },
+                py: { xs: 2, md: 4 },
+              }}
+            >
+              No data available for the selected filters.
+            </Typography>
+          )}
         </Paper>
-      )}
 
-      {/* Scatter Chart */}
-      <Paper
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          p: { xs: 1, sm: 2, md: 3 },
-          mt: 2,
-          borderRadius: 2,
-          alignItems: "center",
-          overflow: "hidden",
-          minHeight: { xs: 300, sm: 400, md: 500 },
-        }}
-      >
-        {scatterData.scatterData?.length > 0 ? (
-          <Suspense fallback={<Loader />}>
-            <Box
-              sx={{
-                width: "100%",
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: { xs: 1, md: 2 },
-              }}
-            >
-              <ScatterChart
-                data={scatterData.scatterData}
-                threshold={scatterData?.threshold}
-                validationLimits={scatterData?.validationLimits}
-                selectedTool={selectedTool}
-                onPointClick={(cycleId, anomaly) => {
-                  console.log("clicked cycle id", cycleId, anomaly);
-                  setSelectedCycle(cycleId);
-                  setSelectedAnomaly(anomaly);
+        {/* Timeseries Graph */}
+        <Paper
+          sx={{
+            p: { xs: 1, sm: 2, md: 3 },
+            mt: 2,
+            borderRadius: 2,
+            overflow: "hidden",
+            minHeight: { xs: 250, sm: 300, md: 400 },
+          }}
+        >
+          {selectedCycle && actualSignal && idealSignal ? (
+            <>
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  gap: { xs: 1, md: 2 },
+                  width: "100%",
+                  height: { xs: 250, sm: 300, md: 400 },
+                  overflow: "hidden",
                 }}
-              />
+              >
+                <TimeSeriesGraph
+                  actualData={actualSignal}
+                  idealData={idealSignal}
+                  showIdealSignal={showComparison}
+                />
+              </Box>
 
-              <ScatterLegend />
-            </Box>
-          </Suspense>
-        ) : (
-          <Typography
-            variant="body1"
-            color="textSecondary"
-            sx={{
-              textAlign: "center",
-              fontSize: { xs: "0.875rem", md: "1rem" },
-              py: { xs: 2, md: 4 },
-            }}
-          >
-            No data available for the selected filters.
-          </Typography>
-        )}
-      </Paper>
-
-      {/* Timeseries Graph */}
-      <Paper
-        sx={{
-          p: { xs: 1, sm: 2, md: 3 },
-          mt: 2,
-          borderRadius: 2,
-          overflow: "hidden",
-          minHeight: { xs: 250, sm: 300, md: 400 },
-        }}
-      >
-        {selectedCycle && actualSignal && idealSignal ? (
-          <>
-            <Box
+              <Box
+                sx={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  mt: 2,
+                }}
+              >
+                <Typography variant="body1" color="textSecondary">
+                  Spindle 1 Load
+                </Typography>
+                <TimeSeriesLegend />
+              </Box>
+            </>
+          ) : (
+            <Typography
+              variant="body1"
+              color="textSecondary"
               sx={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: { xs: 1, md: 2 },
-                width: "100%",
-                height: { xs: 250, sm: 300, md: 400 },
-                overflow: "hidden",
+                textAlign: "center",
+                fontSize: { xs: "0.875rem", md: "1rem" },
+                py: { xs: 2, md: 4 },
               }}
             >
-              <TimeSeriesGraph
-                actualData={actualSignal}
-                idealData={idealSignal}
-                showIdealSignal={showComparison}
-              />
-            </Box>
-
-            <Box
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                mt: 2,
-              }}
-            >
-              <Typography variant="body1" color="textSecondary">
-                Spindle 1 Load
-              </Typography>
-              <TimeSeriesLegend />
-            </Box>
-          </>
-        ) : (
-          <Typography
-            variant="body1"
-            color="textSecondary"
-            sx={{
-              textAlign: "center",
-              fontSize: { xs: "0.875rem", md: "1rem" },
-              py: { xs: 2, md: 4 },
-            }}
-          >
-            No data available for the selected filters.
-          </Typography>
-        )}
-      </Paper>
-    </Box>
+              No data available for the selected filters.
+            </Typography>
+          )}
+        </Paper>
+      </Box>
+    </LocalizationProvider>
   );
 };
 

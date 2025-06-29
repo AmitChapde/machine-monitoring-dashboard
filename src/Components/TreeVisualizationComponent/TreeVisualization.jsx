@@ -177,6 +177,7 @@ const TreeVisualization = () => {
   return (
     <Box sx={{ width: "100%", height: 600, position: "relative" }}>
       <ReactFlow
+        proOptions={{ hideAttribution: true }}
         nodes={nodes.map((node) => ({
           ...node,
           style: {
