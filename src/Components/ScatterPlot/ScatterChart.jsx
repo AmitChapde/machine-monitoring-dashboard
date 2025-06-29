@@ -9,7 +9,7 @@ const ScatterChart = ({ data, threshold, onPointClick }) => {
     const svg = d3.select(ref.current);
     svg.selectAll("*").remove();
 
-     // chart dimensions and margins.
+    // chart dimensions and margins.
     const width = 1200;
     const height = 350;
     const margin = { top: 20, right: 20, bottom: 40, left: 50 };
@@ -22,9 +22,7 @@ const ScatterChart = ({ data, threshold, onPointClick }) => {
     // calculate time step for ideal signal alignment
     const totalDuration = timeMax - timeMin;
     const approxPoints = 20;
-    const timeStep = totalDuration / approxPoints;
 
-    
     const x = d3
       .scaleTime()
       .domain([timeMin, timeMax])
@@ -60,7 +58,7 @@ const ScatterChart = ({ data, threshold, onPointClick }) => {
       .attr("transform", `translate(${margin.left},0)`)
       .call(yAxis);
 
-      //X label
+    //X label
     svg
       .append("text")
       .attr("text-anchor", "middle")
@@ -78,8 +76,7 @@ const ScatterChart = ({ data, threshold, onPointClick }) => {
       .text("Values");
 
     // threshold line
-    // always draw a threshold line above the highest data point
-    const thresholdLine = yMax + yBuffer / 2;
+    const thresholdLine = threshold;
 
     svg
       .append("line")
@@ -103,10 +100,10 @@ const ScatterChart = ({ data, threshold, onPointClick }) => {
 
     svg.call(zoom);
 
-     // Create a group for the data points with a clip path.
+    // Create a group for the data points with a clip path.
     const gPoints = svg.append("g").attr("clip-path", "url(#clip)");
 
-     // Draw the data points as circles.
+    // Draw the data points as circles.
     gPoints
       .selectAll("circle")
       .data(data)
@@ -140,7 +137,7 @@ const ScatterChart = ({ data, threshold, onPointClick }) => {
         onPointClick?.(d.cycleId, d.anomaly);
       });
 
-      // Zoom function to update positions on zoom.
+    // Zoom function to update positions on zoom.
     function zoomed(event) {
       const transform = event.transform;
 
