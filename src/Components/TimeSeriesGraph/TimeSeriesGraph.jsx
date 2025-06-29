@@ -123,7 +123,20 @@ const TimeSeriesGraph = ({ actualData, idealData, showIdealSignal }) => {
         .attr("cx", (d) => xScale(d.x))
         .attr("cy", (d) => yScale(d.y))
         .attr("r", 3)
-        .attr("fill", "#00bcd4");
+        .attr("fill", "#00bcd4")
+
+        .on("mouseenter", (event, d) => {
+          tooltip
+            .style("opacity", 1)
+            .html(
+              `<br/>Time: ${d.x.toFixed(2)}<br/>Value: ${d.y.toFixed(2)}`
+            )
+            .style("left", event.pageX + 5 + "px")
+            .style("top", event.pageY - 28 + "px");
+        })
+        .on("mouseleave", () => {
+          tooltip.style("opacity", 0);
+        });
     }
     // tooltip
     const tooltip = d3
@@ -156,12 +169,12 @@ const TimeSeriesGraph = ({ actualData, idealData, showIdealSignal }) => {
       .on("mouseleave", () => {
         tooltip.style("opacity", 0);
       });
-  }, [actualData, idealData,showIdealSignal]);
+  }, [actualData, idealData, showIdealSignal]);
 
   return (
     <>
       <svg ref={ref} width={1000} height={400}></svg>
-      <div id="timeseries-tooltip" style={{ pointerEvents: 'none' }}></div>
+      <div id="timeseries-tooltip" style={{ pointerEvents: "none" }}></div>
     </>
   );
 };
